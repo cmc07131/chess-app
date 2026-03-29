@@ -308,14 +308,16 @@ export default function ChessBoard() {
   // };
 
   const capturedPieces = useMemo(() => {
-    const h = game.history({ verbose: true });
+    // Calculate captured pieces based on the displayed position
+    const displayGame = new Chess(displayPosition);
+    const h = displayGame.history({ verbose: true });
     const c: { white: string[]; black: string[] } = { white: [], black: [] };
     let wm = 0, bm = 0;
     h.forEach(m => { if (m.captured) { const v = PIECE_VALUES[m.captured.toLowerCase()] || 0; if (m.color === 'w') { c.black.push(PIECE_SYMBOLS['b'+m.captured.toUpperCase()]||''); wm += v; } else { c.white.push(PIECE_SYMBOLS['w'+m.captured.toUpperCase()]||''); bm += v; } } });
     const o = ['♛','♕','♜','♖','♝','♗','♞','♘','♟','♙'];
     c.white.sort((a,b) => o.indexOf(a)-o.indexOf(b)); c.black.sort((a,b) => o.indexOf(a)-o.indexOf(b));
     return { ...c, whiteAdvantage: wm-bm, blackAdvantage: bm-wm };
-  }, [game]);
+  }, [displayPosition]);
 
   useEffect(() => { 
     if (engineEnabled && gameStatus === 'playing') {
