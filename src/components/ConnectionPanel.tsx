@@ -74,9 +74,10 @@ export default function ConnectionPanel() {
   // When connected, start the game
   useEffect(() => {
     if (connectionState === 'connected') {
-      initGame('online', 'white');
+      // Creator is white, joiner is black
+      initGame('online', mode === 'create' ? 'white' : 'black');
     }
-  }, [connectionState, initGame]);
+  }, [connectionState, initGame, mode]);
 
   return (
     <div className="flex-1 flex flex-col p-6 safe-area-top safe-area-bottom">

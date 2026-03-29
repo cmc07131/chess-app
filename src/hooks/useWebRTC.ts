@@ -99,6 +99,15 @@ export function useWebRTC(): UseWebRTCReturn {
           break;
         case 'PONG':
           break;
+        case 'INIT':
+          // Sync current game state when opponent connects
+          const { game } = useGameStore.getState();
+          sendMessage({ 
+            type: 'SYNC', 
+            payload: { fen: game.fen(), moveHistory: game.history() },
+            timestamp: Date.now()
+          });
+          break;
       }
     } catch (e) {
       console.error('Error handling data:', e);
@@ -124,7 +133,12 @@ export function useWebRTC(): UseWebRTCReturn {
       const peer = new SimplePeer({
         initiator: true,
         trickle: false,
-        config: { iceServers: [] }
+        config: { 
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ] 
+        }
       });
       
       peer.on('signal', async (data) => {
@@ -173,7 +187,12 @@ export function useWebRTC(): UseWebRTCReturn {
       const peer = new SimplePeer({
         initiator: false,
         trickle: false,
-        config: { iceServers: [] }
+        config: { 
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ] 
+        }
       });
       
       peer.on('signal', async (data) => {
