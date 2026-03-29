@@ -360,8 +360,14 @@ export default function ChessBoard() {
               <div>
                 <div className="text-chess-text text-sm font-medium">{gameMode === 'pass-and-play' ? (playerColor === 'white' ? 'Black' : 'White') : 'Opponent'}</div>
                 <div className="text-chess-text text-sm flex gap-1 items-center">
-                  {capturedPieces.black.map((p, i) => <span key={i} className="text-lg">{p}</span>)}
-                  {capturedPieces.whiteAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.whiteAdvantage}</span>}
+                  {playerColor === 'white' 
+                    ? capturedPieces.white.map((p, i) => <span key={i} className="text-lg">{p}</span>)
+                    : capturedPieces.black.map((p, i) => <span key={i} className="text-lg">{p}</span>)
+                  }
+                  {playerColor === 'white' 
+                    ? capturedPieces.blackAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.blackAdvantage}</span>
+                    : capturedPieces.whiteAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.whiteAdvantage}</span>
+                  }
                 </div>
               </div>
             </div>
@@ -389,8 +395,14 @@ export default function ChessBoard() {
               <div>
                 <div className="text-chess-text text-sm font-medium">{gameMode === 'pass-and-play' ? (playerColor === 'white' ? 'White' : 'Black') : 'You'}</div>
                 <div className="text-chess-text text-sm flex gap-1 items-center">
-                  {capturedPieces.white.map((p, i) => <span key={i} className="text-lg">{p}</span>)}
-                  {capturedPieces.blackAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.blackAdvantage}</span>}
+                  {playerColor === 'white' 
+                    ? capturedPieces.black.map((p, i) => <span key={i} className="text-lg">{p}</span>)
+                    : capturedPieces.white.map((p, i) => <span key={i} className="text-lg">{p}</span>)
+                  }
+                  {playerColor === 'white' 
+                    ? capturedPieces.whiteAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.whiteAdvantage}</span>
+                    : capturedPieces.blackAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.blackAdvantage}</span>
+                  }
                 </div>
               </div>
             </div>
