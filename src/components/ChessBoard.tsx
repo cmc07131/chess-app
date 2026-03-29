@@ -238,12 +238,12 @@ export default function ChessBoard() {
     
     // If viewing a historical position, need to reset to that position first
     if (historyIndex >= 0 && historyIndex < moveHistory.length - 1) {
-      // Reset game to that position by replaying moves
+      // Reset game to that position by replaying moves up to historyIndex
       const tempGame = new Chess();
       for (let i = 0; i <= historyIndex; i++) {
         tempGame.move(moveHistory[i]);
       }
-      // Sync the game state
+      // Sync the game state - this will truncate future history
       useGameStore.getState().syncGameState(tempGame.fen(), moveHistory.slice(0, historyIndex + 1));
       setHistoryIndex(-1);
     }
@@ -254,7 +254,7 @@ export default function ChessBoard() {
       setHistoryIndex(-1); // Go to current position after making a move
     }
     return move;
-  }, [gameStatus, gameMode, isMyTurn, makeMove, moveHistory, historyIndex, getPositionAtIndex]);
+  }, [gameStatus, gameMode, isMyTurn, makeMove, moveHistory, historyIndex]);
 
   const onPieceClick = useCallback((piece: string, square: string) => {
     if (gameStatus !== 'playing' || (gameMode === 'online' && !isMyTurn)) return;

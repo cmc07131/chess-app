@@ -145,8 +145,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   setPeerId: (id) => set({ peerId: id }),
   setLastMove: (move) => set({ lastMove: move }),
   
-  syncGameState: (fen, _moveHistory) => {
-    const game = new Chess(fen);
+  syncGameState: (_fen, moveHistory) => {
+    // Create a new game and replay moves to preserve history
+    const game = new Chess();
+    for (const move of moveHistory) {
+      game.move(move);
+    }
     set({ game, lastMove: null });
   },
 }));
