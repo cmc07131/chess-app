@@ -4,6 +4,7 @@ import { Chess } from 'chess.js';
 import { useGameStore } from '../store/gameStore';
 import { useChessEngine } from '../hooks/useChessEngine';
 import MoveHistory from './MoveHistory';
+import AnalysisPanel from './AnalysisPanel';
 
 const PIECE_SYMBOLS: Record<string, string> = {
   'wK': '♔', 'wQ': '♕', 'wR': '♖', 'wB': '♗', 'wN': '♘', 'wP': '♙',
@@ -53,7 +54,7 @@ function uciToSan(uci: string, fen: string): string {
 export default function ChessBoard() {
   const { game, makeMove, resetGame, resignGame, gameMode, playerColor, isMyTurn, gameStatus, winner: _winner, lastMove, setCurrentScreen, engineEnabled, setEngineEnabled } = useGameStore();
   const [showHistory, setShowHistory] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(true);
+  const [showAnalysis, setShowAnalysis] = useState(false);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [engineDepth, setEngineDepth] = useState(18);
   const { isAnalyzing, evaluation, startAnalysis, stopAnalysis } = useChessEngine();
@@ -61,6 +62,7 @@ export default function ChessBoard() {
   const [selectedTimeControl, setSelectedTimeControl] = useState(3); // Default 10 min
   const [historyIndex, setHistoryIndex] = useState(-1); // -1 means at current position
   const clockIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   const position = game.fen();
   const moveHistory = game.history();
@@ -77,6 +79,15 @@ export default function ChessBoard() {
   
   // Display position based on history index
   const displayPosition = historyIndex >= 0 ? getPositionAtIndex(historyIndex) : position;
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Initialize clock from time control
   useEffect(() => {
@@ -288,7 +299,7 @@ export default function ChessBoard() {
       {/* Main content - horizontal split */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left side - Board */}
-        <div className={`${showAnalysis ? 'w-[70%]' : 'w-full'} flex flex-col transition-all duration-300`}>
+        <div className={`${showAnalysis && !isMobile ? 'w-[70%]' : 'w-full'} flex flex-col transition-all duration-300`}>
           {/* Opponent clock & info */}
           <div className="flex items-center justify-between px-4 py-2 bg-chess-panel/50">
             <div className="flex items-center gap-2">
@@ -348,8 +359,8 @@ export default function ChessBoard() {
           </div>
         </div>
 
-        {/* Right side - Analysis Panel */}
-        {showAnalysis && (
+        {/* Right side - Analysis Panel (Desktop only) */}
+        {showAnalysis && !isMobile && (
         <div className="w-[30%] bg-chess-panel border-l border-gray-700 flex flex-col overflow-hidden">
           {/* Engine header */}
           <div className="px-3 py-2 border-b border-gray-700 flex items-center justify-between">
@@ -418,6 +429,11 @@ export default function ChessBoard() {
           </div>
         </div>
         )}
+
+      {/* Mobile Analysis Panel (Modal) */}
+      {showAnalysis && isMobile && (
+        <AnalysisPanel onClose={() => setShowAnalysis(false)} />
+      )}
       </div>
 
       {showHistory && <MoveHistory onClose={() => setShowHistory(false)} />}
