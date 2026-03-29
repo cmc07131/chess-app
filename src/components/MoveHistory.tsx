@@ -6,7 +6,7 @@ interface MoveHistoryProps {
 }
 
 export default function MoveHistory({ onClose }: MoveHistoryProps) {
-  const { game, setCurrentScreen } = useGameStore();
+  const { game } = useGameStore();
   const [copied, setCopied] = useState<string | null>(null);
   
   const history = game.history();

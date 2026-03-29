@@ -2,7 +2,7 @@ import { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { useGameStore } from '../store/gameStore';
-import { useChessEngine, formatEvaluation } from '../hooks/useChessEngine';
+import { useChessEngine } from '../hooks/useChessEngine';
 import MoveHistory from './MoveHistory';
 
 const PIECE_SYMBOLS: Record<string, string> = {
@@ -51,7 +51,7 @@ function uciToSan(uci: string, fen: string): string {
 }
 
 export default function ChessBoard() {
-  const { game, makeMove, resetGame, resignGame, gameMode, playerColor, isMyTurn, gameStatus, winner, lastMove, setCurrentScreen, engineEnabled, setEngineEnabled } = useGameStore();
+  const { game, makeMove, resetGame, resignGame, gameMode, playerColor, isMyTurn, gameStatus, winner: _winner, lastMove, setCurrentScreen, engineEnabled, setEngineEnabled } = useGameStore();
   const [showHistory, setShowHistory] = useState(false);
   const [showAnalysis, setShowAnalysis] = useState(true);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
@@ -59,7 +59,6 @@ export default function ChessBoard() {
   const { isAnalyzing, evaluation, startAnalysis, stopAnalysis } = useChessEngine();
   const [clock, setClock] = useState<ClockState>({ white: 600, black: 600, isRunning: false, activeColor: null, increment: 0 });
   const [selectedTimeControl, setSelectedTimeControl] = useState(3); // Default 10 min
-  const [savedMoveHistory, setSavedMoveHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1); // -1 means at current position
   const clockIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -243,15 +242,15 @@ export default function ChessBoard() {
     } else { const p = game.get(square as any); if (p) { const own = gameMode === 'pass-and-play' ? (game.turn() === 'w' ? p.color === 'w' : p.color === 'b') : (playerColor === 'white' ? p.color === 'w' : p.color === 'b'); if (own) setSelectedSquare(square); } }
   }, [gameStatus, gameMode, isMyTurn, playerColor, selectedSquare, game, makeMove, moveHistory.length]);
 
-  const getStatusMessage = () => {
-    if (gameStatus === 'checkmate') return `Checkmate! ${winner === 'white' ? 'White' : 'Black'} wins!`;
-    if (gameStatus === 'draw') return 'Draw!';
-    if (gameStatus === 'resigned') return `${winner === 'white' ? 'Black' : 'White'} resigned.`;
-    if (gameStatus === 'waiting') return 'Waiting for opponent...';
-    if (game.isCheck()) return 'Check!';
-    if (gameMode === 'pass-and-play') return `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
-    return isMyTurn ? 'Your turn' : "Opponent's turn";
-  };
+  // const getStatusMessage = () => {
+  //   if (gameStatus === 'checkmate') return `Checkmate! ${winner === 'white' ? 'White' : 'Black'} wins!`;
+  //   if (gameStatus === 'draw') return 'Draw!';
+  //   if (gameStatus === 'resigned') return `${winner === 'white' ? 'Black' : 'White'} resigned.`;
+  //   if (gameStatus === 'waiting') return 'Waiting for opponent...';
+  //   if (game.isCheck()) return 'Check!';
+  //   if (gameMode === 'pass-and-play') return `${game.turn() === 'w' ? 'White' : 'Black'} to move`;
+  //   return isMyTurn ? 'Your turn' : "Opponent's turn";
+  // };
 
   const capturedPieces = useMemo(() => {
     const h = game.history({ verbose: true });

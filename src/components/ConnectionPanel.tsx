@@ -7,11 +7,10 @@ import { useWebRTC } from '../hooks/useWebRTC';
 type ConnectionMode = 'create' | 'join' | null;
 
 export default function ConnectionPanel() {
-  const { setCurrentScreen, initGame, playerColor } = useGameStore();
+  const { setCurrentScreen, initGame } = useGameStore();
   const { 
     createOffer, 
     handleOffer, 
-    handleAnswer, 
     connectionState, 
     localDescription,
     error 

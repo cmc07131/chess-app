@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { useChessEngine, formatEvaluation } from '../hooks/useChessEngine';
+import { useChessEngine } from '../hooks/useChessEngine';
 
 interface AnalysisPanelProps {
   onClose: () => void;

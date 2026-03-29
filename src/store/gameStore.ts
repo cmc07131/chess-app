@@ -82,7 +82,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   makeMove: (from, to, promotion) => {
-    const { game, playerColor, gameMode } = get();
+    const { game, playerColor, gameMode: _gameMode } = get();
     
     try {
       const move = game.move({ from, to, promotion });
@@ -101,7 +101,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
       
-      const isMyTurn = gameMode === 'pass-and-play' 
+      const isMyTurn = _gameMode === 'pass-and-play' 
         ? true 
         : (playerColor === 'white' ? game.turn() === 'w' : game.turn() === 'b');
       
@@ -120,7 +120,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
   
   resetGame: () => {
-    const { gameMode, playerColor } = get();
+    const { playerColor } = get();
     const game = new Chess();
     set({
       game,
@@ -145,7 +145,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   setPeerId: (id) => set({ peerId: id }),
   setLastMove: (move) => set({ lastMove: move }),
   
-  syncGameState: (fen, moveHistory) => {
+  syncGameState: (fen, _moveHistory) => {
     const game = new Chess(fen);
     set({ game, lastMove: null });
   },
