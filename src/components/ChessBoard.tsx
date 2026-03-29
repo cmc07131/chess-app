@@ -308,16 +308,32 @@ export default function ChessBoard() {
   // };
 
   const capturedPieces = useMemo(() => {
-    // Calculate captured pieces based on the displayed position
-    const displayGame = new Chess(displayPosition);
-    const h = displayGame.history({ verbose: true });
+    // Calculate captured pieces based on the move history up to the displayed position
+    const movesToConsider = historyIndex >= 0 ? historyIndex + 1 : moveHistory.length;
     const c: { white: string[]; black: string[] } = { white: [], black: [] };
     let wm = 0, bm = 0;
-    h.forEach(m => { if (m.captured) { const v = PIECE_VALUES[m.captured.toLowerCase()] || 0; if (m.color === 'w') { c.black.push(PIECE_SYMBOLS['b'+m.captured.toUpperCase()]||''); wm += v; } else { c.white.push(PIECE_SYMBOLS['w'+m.captured.toUpperCase()]||''); bm += v; } } });
+    
+    // Create a game and replay moves to get captured pieces
+    const tempGame = new Chess();
+    for (let i = 0; i < movesToConsider; i++) {
+      const move = tempGame.move(moveHistory[i]);
+      if (move && move.captured) {
+        const v = PIECE_VALUES[move.captured.toLowerCase()] || 0;
+        if (move.color === 'w') {
+          c.black.push(PIECE_SYMBOLS['b'+move.captured.toUpperCase()]||'');
+          wm += v;
+        } else {
+          c.white.push(PIECE_SYMBOLS['w'+move.captured.toUpperCase()]||'');
+          bm += v;
+        }
+      }
+    }
+    
     const o = ['♛','♕','♜','♖','♝','♗','♞','♘','♟','♙'];
-    c.white.sort((a,b) => o.indexOf(a)-o.indexOf(b)); c.black.sort((a,b) => o.indexOf(a)-o.indexOf(b));
+    c.white.sort((a,b) => o.indexOf(a)-o.indexOf(b));
+    c.black.sort((a,b) => o.indexOf(a)-o.indexOf(b));
     return { ...c, whiteAdvantage: wm-bm, blackAdvantage: bm-wm };
-  }, [displayPosition]);
+  }, [moveHistory, historyIndex]);
 
   useEffect(() => { 
     if (engineEnabled && gameStatus === 'playing') {
