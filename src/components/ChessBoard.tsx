@@ -306,9 +306,9 @@ export default function ChessBoard() {
               <div className="w-8 h-8 rounded-full bg-chess-panel flex items-center justify-center text-lg">{gameMode === 'pass-and-play' ? '👤' : '🤖'}</div>
               <div>
                 <div className="text-chess-text text-sm font-medium">{gameMode === 'pass-and-play' ? (playerColor === 'white' ? 'Black' : 'White') : 'Opponent'}</div>
-                <div className="text-chess-text-muted text-xs flex gap-1">
-                  {capturedPieces.black.map((p, i) => <span key={i}>{p}</span>)}
-                  {capturedPieces.whiteAdvantage > 0 && <span className="text-chess-accent">+{capturedPieces.whiteAdvantage}</span>}
+                <div className="text-chess-text text-sm flex gap-1 items-center">
+                  {capturedPieces.black.map((p, i) => <span key={i} className="text-lg">{p}</span>)}
+                  {capturedPieces.whiteAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.whiteAdvantage}</span>}
                 </div>
               </div>
             </div>
@@ -335,9 +335,9 @@ export default function ChessBoard() {
               <div className="w-8 h-8 rounded-full bg-chess-panel flex items-center justify-center text-lg">👤</div>
               <div>
                 <div className="text-chess-text text-sm font-medium">{gameMode === 'pass-and-play' ? (playerColor === 'white' ? 'White' : 'Black') : 'You'}</div>
-                <div className="text-chess-text-muted text-xs flex gap-1">
-                  {capturedPieces.white.map((p, i) => <span key={i}>{p}</span>)}
-                  {capturedPieces.blackAdvantage > 0 && <span className="text-chess-accent">+{capturedPieces.blackAdvantage}</span>}
+                <div className="text-chess-text text-sm flex gap-1 items-center">
+                  {capturedPieces.white.map((p, i) => <span key={i} className="text-lg">{p}</span>)}
+                  {capturedPieces.blackAdvantage > 0 && <span className="text-chess-accent font-bold">+{capturedPieces.blackAdvantage}</span>}
                 </div>
               </div>
             </div>
