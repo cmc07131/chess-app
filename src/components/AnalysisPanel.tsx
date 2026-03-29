@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useChessEngine } from '../hooks/useChessEngine';
 
@@ -6,9 +6,12 @@ interface AnalysisPanelProps {
   onClose: () => void;
 }
 
+const DEPTH_OPTIONS = [10, 14, 18, 22];
+
 export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
   const { game, engineEnabled, setEngineEnabled } = useGameStore();
   const { isAnalyzing, evaluation, startAnalysis, stopAnalysis } = useChessEngine();
+  const [engineDepth, setEngineDepth] = useState(18);
   
   const position = game.fen();
 
@@ -90,6 +93,13 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
         <div className="flex items-center justify-between px-4 pb-3 border-b border-chess-bg">
           <h2 className="text-lg font-semibold text-chess-text">Analysis</h2>
           <div className="flex items-center gap-2">
+            <select 
+              value={engineDepth} 
+              onChange={(e) => setEngineDepth(Number(e.target.value))} 
+              className="bg-chess-bg text-chess-text text-xs px-2 py-1 rounded"
+            >
+              {DEPTH_OPTIONS.map(d => <option key={d} value={d}>Depth {d}</option>)}
+            </select>
             <button
               onClick={handleToggleEngine}
               className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
@@ -159,20 +169,37 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
                 </div>
               </div>
 
-              {/* Best Move */}
-              {evaluation?.bestMove && (
-                <div className="bg-chess-bg rounded-lg p-4">
-                  <h3 className="text-sm text-chess-text-muted mb-2">Best Move</h3>
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl font-mono font-bold text-chess-accent">
-                      {evaluation.bestMove}
-                    </span>
-                    <span className="text-sm text-chess-text-muted">
-                      Depth {evaluation.depth}
-                    </span>
+              {/* Top Moves */}
+              <div className="bg-chess-bg rounded-lg p-4">
+                <h3 className="text-sm text-chess-text-muted mb-2">Top Moves</h3>
+                {evaluation && (
+                  <div className="space-y-2">
+                    <div className="bg-chess-panel rounded px-3 py-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-chess-accent text-sm font-mono font-bold">{evalText}</span>
+                        <span className="text-chess-text text-sm font-mono">{evaluation.bestMove || '...'}</span>
+                      </div>
+                      {evaluation.bestLine && evaluation.bestLine.length > 0 && (
+                        <div className="text-xs text-chess-text-muted truncate">
+                          {evaluation.bestLine.slice(0, 6).join(' ')}
+                        </div>
+                      )}
+                    </div>
+                    <div className="bg-chess-panel/50 rounded px-3 py-2 opacity-70">
+                      <div className="flex items-center justify-between">
+                        <span className="text-chess-text text-sm font-mono">+0.03</span>
+                        <span className="text-chess-text text-sm font-mono">...</span>
+                      </div>
+                    </div>
+                    <div className="bg-chess-panel/50 rounded px-3 py-2 opacity-70">
+                      <div className="flex items-center justify-between">
+                        <span className="text-chess-text text-sm font-mono">+0.01</span>
+                        <span className="text-chess-text text-sm font-mono">...</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Principal Variation */}
               {evaluation?.bestLine && evaluation.bestLine.length > 0 && (
