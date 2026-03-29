@@ -235,32 +235,67 @@ export default function ChessBoard() {
 
   const onDrop = useCallback((from: string, to: string) => {
     if (gameStatus !== 'playing' || (gameMode === 'online' && !isMyTurn)) return false;
+    
+    // If viewing a historical position, need to reset to that position first
+    if (historyIndex >= 0 && historyIndex < moveHistory.length - 1) {
+      // Reset game to that position by replaying moves
+      const tempGame = new Chess();
+      for (let i = 0; i <= historyIndex; i++) {
+        tempGame.move(moveHistory[i]);
+      }
+      // Sync the game state
+      useGameStore.getState().syncGameState(tempGame.fen(), moveHistory.slice(0, historyIndex + 1));
+      setHistoryIndex(-1);
+    }
+    
     const move = makeMove(from, to);
     if (move) {
       setSelectedSquare(null);
-      setHistoryIndex(moveHistory.length + 1);
+      setHistoryIndex(-1); // Go to current position after making a move
     }
     return move;
-  }, [gameStatus, gameMode, isMyTurn, makeMove, moveHistory.length]);
+  }, [gameStatus, gameMode, isMyTurn, makeMove, moveHistory, historyIndex, getPositionAtIndex]);
 
   const onPieceClick = useCallback((piece: string, square: string) => {
     if (gameStatus !== 'playing' || (gameMode === 'online' && !isMyTurn)) return;
+    
+    // If viewing a historical position, need to reset to that position first
+    if (historyIndex >= 0 && historyIndex < moveHistory.length - 1) {
+      const tempGame = new Chess();
+      for (let i = 0; i <= historyIndex; i++) {
+        tempGame.move(moveHistory[i]);
+      }
+      useGameStore.getState().syncGameState(tempGame.fen(), moveHistory.slice(0, historyIndex + 1));
+      setHistoryIndex(-1);
+    }
+    
     const isWhite = piece[0] === 'w';
     const isOwn = gameMode === 'pass-and-play' ? (game.turn() === 'w' ? isWhite : !isWhite) : (playerColor === 'white' ? isWhite : !isWhite);
     if (isOwn) setSelectedSquare(square);
     else if (selectedSquare && makeMove(selectedSquare, square)) {
       setSelectedSquare(null);
-      setHistoryIndex(moveHistory.length + 1);
+      setHistoryIndex(-1);
     }
-  }, [gameStatus, gameMode, isMyTurn, playerColor, selectedSquare, makeMove, game, moveHistory.length]);
+  }, [gameStatus, gameMode, isMyTurn, playerColor, selectedSquare, makeMove, game, moveHistory, historyIndex]);
 
   const onSquareClick = useCallback((square: string) => {
     if (gameStatus !== 'playing' || (gameMode === 'online' && !isMyTurn)) return;
+    
+    // If viewing a historical position, need to reset to that position first
+    if (historyIndex >= 0 && historyIndex < moveHistory.length - 1) {
+      const tempGame = new Chess();
+      for (let i = 0; i <= historyIndex; i++) {
+        tempGame.move(moveHistory[i]);
+      }
+      useGameStore.getState().syncGameState(tempGame.fen(), moveHistory.slice(0, historyIndex + 1));
+      setHistoryIndex(-1);
+    }
+    
     if (selectedSquare) {
-      if (makeMove(selectedSquare, square)) { setSelectedSquare(null); setHistoryIndex(moveHistory.length + 1); }
+      if (makeMove(selectedSquare, square)) { setSelectedSquare(null); setHistoryIndex(-1); }
       else { const p = game.get(square as any); if (p) { const own = gameMode === 'pass-and-play' ? (game.turn() === 'w' ? p.color === 'w' : p.color === 'b') : (playerColor === 'white' ? p.color === 'w' : p.color === 'b'); if (own) setSelectedSquare(square); } }
     } else { const p = game.get(square as any); if (p) { const own = gameMode === 'pass-and-play' ? (game.turn() === 'w' ? p.color === 'w' : p.color === 'b') : (playerColor === 'white' ? p.color === 'w' : p.color === 'b'); if (own) setSelectedSquare(square); } }
-  }, [gameStatus, gameMode, isMyTurn, playerColor, selectedSquare, game, makeMove, moveHistory.length]);
+  }, [gameStatus, gameMode, isMyTurn, playerColor, selectedSquare, game, makeMove, moveHistory, historyIndex]);
 
   // const getStatusMessage = () => {
   //   if (gameStatus === 'checkmate') return `Checkmate! ${winner === 'white' ? 'White' : 'Black'} wins!`;
