@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Chess } from 'chess.js';
 import { useGameStore } from '../store/gameStore';
 import { useChessEngine } from '../hooks/useChessEngine';
 
@@ -7,6 +8,21 @@ interface AnalysisPanelProps {
 }
 
 const DEPTH_OPTIONS = [10, 14, 18, 22];
+
+// Convert UCI move to standard algebraic notation
+function uciToSan(uci: string, fen: string): string {
+  if (!uci || uci.length < 4) return uci;
+  try {
+    const tempGame = new Chess(fen);
+    const from = uci.substring(0, 2);
+    const to = uci.substring(2, 4);
+    const promotion = uci.length > 4 ? uci[4] : undefined;
+    const move = tempGame.move({ from, to, promotion });
+    return move ? move.san : uci;
+  } catch {
+    return uci;
+  }
+}
 
 export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
   const { game, engineEnabled, setEngineEnabled } = useGameStore();
@@ -40,7 +56,8 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
       setEngineEnabled(false);
     } else {
       setEngineEnabled(true);
-      startAnalysis(position);
+      const turn = game.turn() === 'w' ? 'w' : 'b';
+      startAnalysis(position, engineDepth, turn);
     }
   };
 
@@ -48,13 +65,16 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
     if (!evaluation) return '0.0';
     
     if (evaluation.mate !== null) {
-      return `M${Math.abs(evaluation.mate)}`;
+      // Mate score is from perspective of side to move
+      const displayMate = evaluation.turn === 'b' ? -evaluation.mate : evaluation.mate;
+      return displayMate > 0 ? `M${Math.abs(displayMate)}` : `M${Math.abs(displayMate)}`;
     }
     
     if (evaluation.score !== null) {
-      const pawns = evaluation.score / 100;
-      const sign = pawns >= 0 ? '+' : '';
-      return `${sign}${pawns.toFixed(1)}`;
+      // Flip score for black's perspective (score is always from side to move)
+      const displayScore = evaluation.turn === 'b' ? -evaluation.score : evaluation.score;
+      const pawns = displayScore / 100;
+      return `${pawns >= 0 ? '+' : ''}${pawns.toFixed(1)}`;
     }
     
     return '0.0';
@@ -64,12 +84,16 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
     if (!evaluation) return 'text-chess-text';
     
     if (evaluation.mate !== null) {
-      return evaluation.mate > 0 ? 'text-chess-accent' : 'text-red-400';
+      // Mate score is from perspective of side to move
+      const displayMate = evaluation.turn === 'b' ? -evaluation.mate : evaluation.mate;
+      return displayMate > 0 ? 'text-chess-accent' : 'text-red-400';
     }
     
     if (evaluation.score !== null) {
-      if (evaluation.score > 50) return 'text-chess-accent';
-      if (evaluation.score < -50) return 'text-red-400';
+      // Flip score for black's perspective (score is always from side to move)
+      const displayScore = evaluation.turn === 'b' ? -evaluation.score : evaluation.score;
+      if (displayScore > 50) return 'text-chess-accent';
+      if (displayScore < -50) return 'text-red-400';
     }
     
     return 'text-chess-text';
@@ -158,14 +182,14 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
                 
                 {/* Status text */}
                 <div className="mt-2 text-sm text-chess-text-muted text-center">
-                  {evaluation?.mate !== null 
-                    ? (evaluation?.mate ?? 0) > 0 ? 'White mates' : 'Black mates'
-                    : Math.abs((evaluation?.score ?? 0) / 100) < 0.3 
+                  {evaluation && (evaluation.mate !== null 
+                    ? (evaluation.turn === 'b' ? -(evaluation.mate ?? 0) : (evaluation.mate ?? 0)) > 0 ? 'White is better' : 'Black is better'
+                    : Math.abs((evaluation.turn === 'b' ? -(evaluation.score ?? 0) : (evaluation.score ?? 0)) / 100) < 0.3 
                       ? 'Equal position' 
-                      : (evaluation?.score ?? 0) > 0 
+                      : (evaluation.turn === 'b' ? -(evaluation.score ?? 0) : (evaluation.score ?? 0)) > 0 
                         ? 'White is better' 
                         : 'Black is better'
-                  }
+                  )}
                 </div>
               </div>
 
@@ -177,11 +201,11 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
                     <div className="bg-chess-panel rounded px-3 py-2">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-chess-accent text-sm font-mono font-bold">{evalText}</span>
-                        <span className="text-chess-text text-sm font-mono">{evaluation.bestMove || '...'}</span>
+                        <span className="text-chess-text text-sm font-mono">{evaluation.bestMove ? uciToSan(evaluation.bestMove, position) : '...'}</span>
                       </div>
                       {evaluation.bestLine && evaluation.bestLine.length > 0 && (
                         <div className="text-xs text-chess-text-muted truncate">
-                          {evaluation.bestLine.slice(0, 6).join(' ')}
+                          {evaluation.bestLine.slice(0, 6).map(m => uciToSan(m, position)).join(' ')}
                         </div>
                       )}
                     </div>
@@ -206,14 +230,17 @@ export default function AnalysisPanel({ onClose }: AnalysisPanelProps) {
                 <div className="bg-chess-bg rounded-lg p-4">
                   <h3 className="text-sm text-chess-text-muted mb-2">Best Line</h3>
                   <div className="flex flex-wrap gap-2">
-                    {evaluation.bestLine.slice(0, 8).map((move, index) => (
-                      <span 
-                        key={index}
-                        className="px-2 py-1 bg-chess-panel rounded text-sm font-mono text-chess-text"
-                      >
-                        {index % 2 === 0 ? `${Math.floor(index / 2) + 1}.` : ''} {move}
-                      </span>
-                    ))}
+                    {evaluation.bestLine.slice(0, 8).map((move, index) => {
+                      const san = uciToSan(move, position);
+                      return (
+                        <span 
+                          key={index}
+                          className="px-2 py-1 bg-chess-panel rounded text-sm font-mono text-chess-text"
+                        >
+                          {index % 2 === 0 ? `${Math.floor(index / 2) + 1}.` : ''} {san}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               )}

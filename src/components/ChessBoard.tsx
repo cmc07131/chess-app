@@ -184,8 +184,17 @@ export default function ChessBoard() {
 
   const evalText = useMemo(() => {
     if (!evaluation) return '0.00';
-    if (evaluation.mate !== null) return `M${Math.abs(evaluation.mate)}`;
-    if (evaluation.score !== null) return `${evaluation.score >= 0 ? '+' : ''}${(evaluation.score / 100).toFixed(2)}`;
+    if (evaluation.mate !== null) {
+      // Mate score is from perspective of side to move
+      const displayMate = evaluation.turn === 'b' ? -evaluation.mate : evaluation.mate;
+      return displayMate > 0 ? `M${Math.abs(displayMate)}` : `M${Math.abs(displayMate)}`;
+    }
+    if (evaluation.score !== null) {
+      // Flip score for black's perspective (score is always from side to move)
+      const displayScore = evaluation.turn === 'b' ? -evaluation.score : evaluation.score;
+      const pawns = displayScore / 100;
+      return `${pawns >= 0 ? '+' : ''}${pawns.toFixed(2)}`;
+    }
     return '0.00';
   }, [evaluation]);
 
@@ -273,7 +282,14 @@ export default function ChessBoard() {
     return { ...c, whiteAdvantage: wm-bm, blackAdvantage: bm-wm };
   }, [game]);
 
-  useEffect(() => { if (engineEnabled && gameStatus === 'playing') startAnalysis(position, engineDepth); else stopAnalysis(); }, [engineEnabled, position, gameStatus, engineDepth, startAnalysis, stopAnalysis]);
+  useEffect(() => { 
+    if (engineEnabled && gameStatus === 'playing') {
+      const turn = game.turn() === 'w' ? 'w' : 'b';
+      startAnalysis(position, engineDepth, turn); 
+    } else {
+      stopAnalysis(); 
+    }
+  }, [engineEnabled, position, gameStatus, engineDepth, startAnalysis, stopAnalysis, game]);
 
   const movePairs = useMemo(() => {
     const pairs: { num: number; white: string; black?: string }[] = [];

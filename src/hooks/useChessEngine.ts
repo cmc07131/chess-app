@@ -6,12 +6,14 @@ interface EngineEvaluation {
   bestMove: string | null;
   bestLine: string[];
   depth: number;
+  turn: 'w' | 'b';
+  topMoves?: { move: string; score: number | null; mate: number | null }[];
 }
 
 interface UseChessEngineReturn {
   isAnalyzing: boolean;
   evaluation: EngineEvaluation | null;
-  startAnalysis: (fen: string, depth?: number) => void;
+  startAnalysis: (fen: string, depth?: number, turn?: 'w' | 'b') => void;
   stopAnalysis: () => void;
   toggleAnalysis: () => void;
 }
@@ -21,6 +23,7 @@ export function useChessEngine(): UseChessEngineReturn {
   const [evaluation, setEvaluation] = useState<EngineEvaluation | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const currentFenRef = useRef<string>('');
+  const currentTurnRef = useRef<'w' | 'b'>('w');
   const bestLineRef = useRef<string[]>([]);
   const bestScoreRef = useRef<{ type: 'cp' | 'mate'; value: number } | null>(null);
   const bestDepthRef = useRef<number>(0);
@@ -79,6 +82,7 @@ export function useChessEngine(): UseChessEngineReturn {
               bestMove: null, // Will be set from bestmove line
               bestLine: bestLineRef.current.slice(0, 6),
               depth: depth,
+              turn: currentTurnRef.current,
             });
           }
         }
@@ -100,6 +104,7 @@ export function useChessEngine(): UseChessEngineReturn {
             bestMove: bestMove,
             bestLine: bestLineRef.current.slice(0, 6),
             depth: bestDepthRef.current,
+            turn: currentTurnRef.current,
           });
           
           setIsAnalyzing(false);
@@ -119,8 +124,9 @@ export function useChessEngine(): UseChessEngineReturn {
     return worker;
   }, []);
 
-  const startAnalysis = useCallback((fen: string, depth: number = 18) => {
+  const startAnalysis = useCallback((fen: string, depth: number = 18, turn: 'w' | 'b' = 'w') => {
     currentFenRef.current = fen;
+    currentTurnRef.current = turn;
     setIsAnalyzing(true);
     setEvaluation(null);
     bestLineRef.current = [];
